@@ -17,7 +17,7 @@ export default function PetaniDashboard() {
   });
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [batasKelembapan, setBatasKelembapan] = useState(40); // State untuk ambang batas
+  const [batasKelembapan, setBatasKelembapan] = useState(40); 
 
   const handleTogglePompa = async () => {
     try {
@@ -246,37 +246,6 @@ export default function PetaniDashboard() {
             </button>
           </div>
         </div>
-
-        {/* Konfigurasi Ambang Batas */}
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem' }}>
-            <Settings size={20} color="var(--color-primary)" />
-            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Konfigurasi Ambang Batas</h3>
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Atur nilai minimum kelembapan tanah untuk aktivasi penyiraman otomatis.</p>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: 'auto', paddingTop: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Batas Minimum (%)</label>
-              <input 
-                type="number" 
-                value={batasKelembapan}
-                onChange={(e) => setBatasKelembapan(e.target.value)}
-                className="auth-input"
-                style={{ padding: '0.5rem' }}
-                min="0" max="100"
-              />
-            </div>
-            <button 
-              onClick={handleSimpanBatas}
-              className="btn-primary"
-              style={{ padding: '0.5rem 1.5rem', height: 'fit-content', alignSelf: 'flex-end' }}
-            >
-              Simpan
-            </button>
-          </div>
-        </div>
-
       </div>
 
     </>

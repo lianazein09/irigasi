@@ -17,7 +17,7 @@ export default function PetaniDashboard() {
   });
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [batasKelembapan, setBatasKelembapan] = useState(40); // State untuk ambang batas
+  const [batasKelembapan, setBatasKelembapan] = useState(40); 
 
   const handleTogglePompa = async () => {
     try {

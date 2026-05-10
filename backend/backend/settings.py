@@ -1,17 +1,5 @@
 from pathlib import Path
 import os
-import pymysql
-pymysql.install_as_MySQLdb()
-import MySQLdb
-MySQLdb.version_info = (2, 2, 1, "final", 0)
-
-# Patch Django's database version check to allow older MariaDB versions
-from django.db.backends.base.base import BaseDatabaseWrapper
-BaseDatabaseWrapper.check_database_version_supported = lambda self: None
-
-from django.db.backends.mysql.features import DatabaseFeatures
-DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
-DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -87,12 +75,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'tani_cerdas'),
-        'USER': os.environ.get('DB_USER', 'root'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('DB_PORT', '3307'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 

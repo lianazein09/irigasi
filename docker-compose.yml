@@ -1,17 +1,16 @@
 services:
   db:
-    image: mariadb:10.11
+    image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: ${DB_NAME:-tani_cerdas}
-      MARIADB_USER: ${DB_USER:-tani_user}
-      MARIADB_PASSWORD: ${DB_PASSWORD:-tani_password}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      POSTGRES_DB: ${DB_NAME:-tani_cerdas}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password}
     volumes:
-      - db_data:/var/lib/mysql
-      - ./backend/database.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - db_data:/var/lib/postgresql/data
+      - ./backend/postgres_init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-tani_cerdas}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -30,10 +29,10 @@ services:
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost}
       TIME_ZONE: ${TIME_ZONE:-Asia/Jakarta}
       DB_NAME: ${DB_NAME:-tani_cerdas}
-      DB_USER: ${DB_USER:-tani_user}
-      DB_PASSWORD: ${DB_PASSWORD:-tani_password}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres_password}
       DB_HOST: db
-      DB_PORT: 3306
+      DB_PORT: 5432
       MQTT_ENABLED: "False"
     depends_on:
       db:
@@ -51,10 +50,10 @@ services:
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
       TIME_ZONE: ${TIME_ZONE:-Asia/Jakarta}
       DB_NAME: ${DB_NAME:-tani_cerdas}
-      DB_USER: ${DB_USER:-tani_user}
-      DB_PASSWORD: ${DB_PASSWORD:-tani_password}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres_password}
       DB_HOST: db
-      DB_PORT: 3306
+      DB_PORT: 5432
       MQTT_ENABLED: "False"
       MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-broker.emqx.io}
       MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
@@ -68,7 +67,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8081}:80"
+      - "${APP_PORT:-8081}:8081"
     depends_on:
       - backend
 

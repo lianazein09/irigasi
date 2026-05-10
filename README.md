@@ -40,7 +40,7 @@ make logs
 make clean
 ```
 
-By default the `Makefile` uses `.env.production`. To use another env file:
+By default the `Makefile` uses `.env`. To use another env file:
 
 ```bash
 make deploy ENV_FILE=.env.example

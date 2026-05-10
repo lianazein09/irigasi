@@ -1,4 +1,4 @@
-ENV_FILE ?= .env.production
+ENV_FILE ?= .env
 COMPOSE := docker compose --env-file $(ENV_FILE)
 
 .PHONY: help deploy up down restart build rebuild logs ps config clean

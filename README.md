@@ -26,11 +26,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The application will be available on `http://localhost` by default.
+The application will be available on `http://localhost:8081` by default.
 
 ### Notes
 
 - Frontend API calls now use a configurable base URL and default to `/api`, which is proxied by Nginx to Django.
+- The stack is mapped to host port `8081` by default so it does not compete with another project already using port `80`. Change `APP_PORT` in `.env` if needed.
 - Update `.env` before real production deployment, especially:
   - `DJANGO_SECRET_KEY`
   - `DJANGO_ALLOWED_HOSTS`

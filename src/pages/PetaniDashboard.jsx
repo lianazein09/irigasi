@@ -4,6 +4,7 @@ import axios from 'axios';
 import SensorCard from '../components/SensorCard';
 import ChartWidget from '../components/ChartWidget';
 import ZoneCard from '../components/ZoneCard';
+import { apiUrl } from '../utils/api';
 
 export default function PetaniDashboard() {
   const [data, setData] = useState({
@@ -21,7 +22,7 @@ export default function PetaniDashboard() {
 
   const handleTogglePompa = async () => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/toggle-pump/');
+      const response = await axios.post(apiUrl('/toggle-pump/'));
       if (response.data.success) {
         setData(prev => ({ ...prev, pompa_aktif: response.data.pompa_aktif }));
         alert(response.data.message);
@@ -34,7 +35,7 @@ export default function PetaniDashboard() {
 
   const handleSimpanBatas = async () => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/threshold/', {
+      const response = await axios.post(apiUrl('/threshold/'), {
         batas_kelembapan: batasKelembapan
       });
       if (response.data.success) {
@@ -49,14 +50,14 @@ export default function PetaniDashboard() {
   const handleDownloadReport = () => {
     setIsDownloading(true);
     // Mengunduh langsung dari endpoint backend
-    window.location.href = 'http://127.0.0.1:8000/api/download-report/';
+    window.location.href = apiUrl('/download-report/');
     setTimeout(() => setIsDownloading(false), 2000); // Reset button state after a short delay
   };
 
   useEffect(() => {
     const fetchThreshold = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/threshold/');
+        const response = await axios.get(apiUrl('/threshold/'));
         if (response.data.batas_kelembapan) {
           setBatasKelembapan(response.data.batas_kelembapan);
         }
@@ -68,7 +69,7 @@ export default function PetaniDashboard() {
     // Memanggil API backend
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/dashboard/');
+        const response = await axios.get(apiUrl('/dashboard/'));
         
         let apiData = response.data;
         

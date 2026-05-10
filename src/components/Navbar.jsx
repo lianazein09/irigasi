@@ -3,6 +3,7 @@ import { Bell, LogOut, ChevronDown, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Components.css';
+import { apiUrl } from '../utils/api';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function Navbar() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/profile/update/', {
+      const response = await axios.post(apiUrl('/profile/update/'), {
         id_user: currentUser.id_user,
         nama: editData.nama,
         username: editData.username,

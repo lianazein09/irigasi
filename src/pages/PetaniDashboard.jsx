@@ -70,19 +70,7 @@ export default function PetaniDashboard() {
     const fetchData = async () => {
       try {
         const response = await axios.get(apiUrl('/dashboard/'));
-        
-        let apiData = response.data;
-        
-        // Mock data untuk metrik baru jika backend belum support
-        if (apiData.chart_data && apiData.chart_data.length > 0) {
-          apiData.chart_data = apiData.chart_data.map(item => ({
-            ...item,
-            suhu: item.suhu || (Math.random() * 5 + 25).toFixed(1), // Mock suhu 25-30
-            kelembapan_udara: item.kelembapan_udara || (Math.random() * 20 + 50).toFixed(1), // Mock 50-70%
-            curah_hujan: item.curah_hujan || (Math.random() * 15).toFixed(1) // Mock 0-15mm
-          }));
-        }
-
+        const apiData = response.data;
         setData(prevData => ({
           ...apiData,
           pompa_aktif: apiData.pompa_aktif,

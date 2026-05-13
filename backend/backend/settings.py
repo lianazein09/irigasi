@@ -190,5 +190,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MQTT_BROKER_HOST = os.environ.get('MQTT_BROKER_HOST', 'broker.emqx.io')
 MQTT_BROKER_PORT = int(os.environ.get('MQTT_BROKER_PORT', 1883))
 MQTT_ENABLED = env_bool('MQTT_ENABLED', True)
+DEVICE_API_KEY = os.environ.get('DEVICE_API_KEY', '')
 # MQTT_USERNAME = 'your_username'
 # MQTT_PASSWORD = 'your_password'

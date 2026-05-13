@@ -5,11 +5,70 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def load_env_file(env_path):
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+for candidate in (BASE_DIR.parent / '.env', BASE_DIR.parent / '.env.production', BASE_DIR / '.env'):
+    load_env_file(candidate)
+
+
 def env_bool(name, default=False):
     value = os.environ.get(name)
     if value is None:
         return default
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def get_database_config():
+    engine_name = os.environ.get('DB_ENGINE', 'postgresql').strip().lower()
+    if engine_name == 'postgres':
+        engine_name = 'postgresql'
+
+    common_config = {
+        'NAME': os.environ.get('DB_NAME', 'tani_cerdas'),
+        'USER': os.environ.get('DB_USER', 'postgres' if engine_name == 'postgresql' else 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '5432' if engine_name == 'postgresql' else '3307'),
+    }
+
+    if engine_name == 'postgresql':
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            **common_config,
+        }
+
+    if engine_name == 'mysql':
+        import pymysql
+        pymysql.install_as_MySQLdb()
+        import MySQLdb
+        MySQLdb.version_info = (2, 2, 1, "final", 0)
+
+        # Preserve the MariaDB/MySQL compatibility behavior used by the legacy app.
+        from django.db.backends.base.base import BaseDatabaseWrapper
+        from django.db.backends.mysql.features import DatabaseFeatures
+
+        BaseDatabaseWrapper.check_database_version_supported = lambda self: None
+        DatabaseFeatures.can_return_columns_from_insert = property(lambda self: False)
+        DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda self: False)
+
+        return {
+            'ENGINE': 'django.db.backends.mysql',
+            **common_config,
+        }
+
+    raise ValueError("Unsupported DB_ENGINE. Use 'postgresql' or 'mysql'.")
 
 
 # Quick-start development settings - unsuitable for production
@@ -74,14 +133,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'tani_cerdas'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
+    'default': get_database_config()
 }
 
 cors_origins = [origin.strip() for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()]

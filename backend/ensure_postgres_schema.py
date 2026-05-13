@@ -30,6 +30,10 @@ def ensure_sequence(cursor, table_name, column_name, sequence_name):
 
 
 def main():
+    engine_name = os.environ.get("DB_ENGINE", "postgresql").strip().lower()
+    if engine_name not in {"postgres", "postgresql"}:
+        return
+
     conn = psycopg.connect(
         dbname=os.environ.get("DB_NAME", "tani_cerdas"),
         user=os.environ.get("DB_USER", "postgres"),

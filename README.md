@@ -6,7 +6,7 @@ This repository now includes a production-oriented Docker setup for:
 
 - `frontend`: React app built with Vite and served by Nginx
 - `backend`: Django API served by Gunicorn
-- `db`: PostgreSQL initialized from `backend/postgres_init.sql`
+- `db`: MariaDB/MySQL initialized from `backend/database.sql`
 - `mqtt-worker`: dedicated MQTT consumer process
 
 ### Files Added
@@ -50,7 +50,7 @@ make deploy ENV_FILE=.env.example
 
 - Frontend API calls now use a configurable base URL and default to `/api`, which is proxied by Nginx to Django.
 - The stack is mapped to host port `8081` by default so it does not compete with another project already using port `80`. Change `APP_PORT` in `.env` if needed.
-- The database runtime is PostgreSQL, not MySQL/MariaDB.
+- The database runtime defaults to MySQL/MariaDB.
 - Update `.env` before real production deployment, especially:
   - `DJANGO_SECRET_KEY`
   - `DJANGO_ALLOWED_HOSTS`

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-DB_ENGINE_NORMALIZED=$(printf '%s' "${DB_ENGINE:-postgresql}" | tr '[:upper:]' '[:lower:]')
+DB_ENGINE_NORMALIZED=$(printf '%s' "${DB_ENGINE:-mysql}" | tr '[:upper:]' '[:lower:]')
 
 if [ "$DB_ENGINE_NORMALIZED" = "postgres" ] || [ "$DB_ENGINE_NORMALIZED" = "postgresql" ]; then
   python /app/ensure_postgres_schema.py

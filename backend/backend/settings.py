@@ -31,7 +31,7 @@ def env_bool(name, default=False):
 
 
 def get_database_config():
-    engine_name = os.environ.get('DB_ENGINE', 'postgresql').strip().lower()
+    engine_name = os.environ.get('DB_ENGINE', 'mysql').strip().lower()
     if engine_name == 'postgres':
         engine_name = 'postgresql'
 
@@ -40,7 +40,7 @@ def get_database_config():
         'USER': os.environ.get('DB_USER', 'postgres' if engine_name == 'postgresql' else 'root'),
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('DB_PORT', '5432' if engine_name == 'postgresql' else '3307'),
+        'PORT': os.environ.get('DB_PORT', '5432' if engine_name == 'postgresql' else '3306'),
     }
 
     if engine_name == 'postgresql':

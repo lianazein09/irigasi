@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+python /app/ensure_mysql_access.py
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 

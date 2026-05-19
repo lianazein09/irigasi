@@ -51,10 +51,12 @@ make deploy ENV_FILE=.env.example
 - Frontend API calls now use a configurable base URL and default to `/api`, which is proxied by Nginx to Django.
 - The stack is mapped to host port `8081` by default so it does not compete with another project already using port `80`. Change `APP_PORT` in `.env` if needed.
 - The database runtime defaults to MySQL/MariaDB.
+- The MariaDB container creates the application database user from `.env` via `DB_USER` and `DB_PASSWORD`, with access to `DB_NAME`.
+- On backend startup, `ensure_mysql_access.py` re-checks that user during deploy and re-deploy, recreates it if missing, and reapplies grants on `DB_NAME`.
 - Update `.env` before real production deployment, especially:
   - `DJANGO_SECRET_KEY`
   - `DJANGO_ALLOWED_HOSTS`
   - `CORS_ALLOWED_ORIGINS`
   - `CSRF_TRUSTED_ORIGINS`
-  - database passwords
+  - `DB_PASSWORD` and `DB_ROOT_PASSWORD`
 - The MQTT consumer runs in a separate container to avoid duplicate subscriptions under Gunicorn workers.

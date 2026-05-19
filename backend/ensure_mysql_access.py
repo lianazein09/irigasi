@@ -1,6 +1,7 @@
 import os
 
 import pymysql
+from pymysql.err import OperationalError
 
 
 def main():
@@ -19,13 +20,19 @@ def main():
         os.environ.get("DB_ROOT_PASSWORD", ""),
     )
 
-    connection = pymysql.connect(
-        host=db_host,
-        port=db_port,
-        user=admin_user,
-        password=admin_password,
-        autocommit=True,
-    )
+    try:
+        connection = pymysql.connect(
+            host=db_host,
+            port=db_port,
+            user=admin_user,
+            password=admin_password,
+            autocommit=True,
+        )
+    except OperationalError as exc:
+        if exc.args and exc.args[0] == 1045:
+            verify_application_access(db_host, db_port, db_name, db_user, db_password)
+            return
+        raise
 
     try:
         with connection.cursor() as cursor:
@@ -48,6 +55,20 @@ def main():
             cursor.execute("FLUSH PRIVILEGES")
     finally:
         connection.close()
+
+    verify_application_access(db_host, db_port, db_name, db_user, db_password)
+
+
+def verify_application_access(db_host, db_port, db_name, db_user, db_password):
+    connection = pymysql.connect(
+        host=db_host,
+        port=db_port,
+        user=db_user,
+        password=db_password,
+        database=db_name,
+        autocommit=True,
+    )
+    connection.close()
 
 
 if __name__ == "__main__":

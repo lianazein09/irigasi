@@ -1,17 +1,40 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Droplets, LayoutDashboard, Settings, Users, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import './Components.css';
 
 export default function Sidebar() {
   const location = useLocation();
 
+  const [userRole, setUserRole] = useState('petani');
+
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUserRole(parsedUser.role || 'petani');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const menuItems = [
     {
       path: '/dashboard',
-      name: 'Dashboard',
+      name: 'Dashboard Petani',
       icon: LayoutDashboard
     }
   ];
+
+  if (userRole === 'admin') {
+    menuItems.push({
+      path: '/admin-dashboard',
+      name: 'Dashboard Admin',
+      icon: Users
+    });
+  }
 
   return (
     <div className="sidebar">

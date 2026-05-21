@@ -28,14 +28,18 @@ export default function Login() {
         // Langsung arahkan ke dashboard utama
         navigate('/dashboard');
       }
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        setErrorMsg('Username atau Password salah!');
-      } else {
-        setErrorMsg('Terjadi kesalahan pada server.');
-        console.error(error);
-      }
-    }
+} catch (error) {
+       if (error.response && error.response.status === 401) {
+         setErrorMsg('Username atau Password salah!');
+       } else if (error.response) {
+         setErrorMsg(error.response.data.message || 'Login gagal.');
+       } else if (error.request) {
+         setErrorMsg('Tidak dapat terhubung ke server. Pastikan server berjalan.');
+       } else {
+         setErrorMsg('Terjadi kesalahan: ' + error.message);
+       }
+       console.error(error);
+     }
   };
 
   return (

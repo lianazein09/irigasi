@@ -131,12 +131,11 @@ def register_user(request):
         username = request.data.get('username')
         password = request.data.get('password')
         nama = request.data.get('nama')
-        role = request.data.get('role', 'user') # Default jadi petani (user)
+        role = request.data.get('role', 'user')
 
         if not username or not password or not nama:
             return Response({"success": False, "message": "Semua kolom harus diisi!"}, status=400)
 
-        # Cek username
         if User.objects.filter(username=username).exists():
             return Response({"success": False, "message": "Username sudah digunakan!"}, status=400)
 
@@ -146,9 +145,18 @@ def register_user(request):
             nama=nama,
             role=role
         )
-        return Response({"success": True, "message": "Berhasil daftar!"})
+        return Response({
+            "success": True,
+            "message": "Berhasil daftar!",
+            "data": {
+                "id_user": user.id_user,
+                "username": user.username,
+                "nama": user.nama,
+                "role": user.role
+            }
+        })
     except Exception as e:
-        return Response({"error": str(e)}, status=500)
+        return Response({"success": False, "message": f"Error: {str(e)}"}, status=500)
 
 @api_view(['GET'])
 def download_report(request):

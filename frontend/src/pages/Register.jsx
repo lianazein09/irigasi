@@ -25,13 +25,15 @@ export default function Register() {
       if (response.data.success) {
         navigate('/login');
       }
-    } catch (error) {
-      if (error.response && error.response.status === 400) {
-        setErrorMsg(error.response.data.message);
-      } else {
-        setErrorMsg('Terjadi kesalahan koneksi ke server.');
-      }
-    }
+} catch (error) {
+       if (error.response) {
+         setErrorMsg(error.response.data.message || 'Registrasi gagal.');
+       } else if (error.request) {
+         setErrorMsg('Tidak dapat terhubung ke server. Pastikan server berjalan.');
+       } else {
+         setErrorMsg('Terjadi kesalahan: ' + error.message);
+       }
+     }
   };
 
   return (

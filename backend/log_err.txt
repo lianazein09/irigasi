@@ -1,0 +1,4 @@
+Watching for file changes with StatReloader
+[20/May/2026 12:41:36] "OPTIONS /api/login/ HTTP/1.1" 200 0
+Unauthorized: /api/login/
+[20/May/2026 12:41:36] "POST /api/login/ HTTP/1.1" 401 59

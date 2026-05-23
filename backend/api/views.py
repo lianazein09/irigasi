@@ -2,23 +2,110 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Avg
 from django.http import HttpResponse
+from django.conf import settings
+from pathlib import Path
 import csv
+import json
 from datetime import datetime
 
 from .models import TelemetryLog, SprinklerLog, Sensor
 
+DEVICE_CACHE_PATH = Path(settings.BASE_DIR) / 'device_latest.json'
+MAX_HISTORY_ITEMS = 288
+
+
+def load_device_cache():
+    if not DEVICE_CACHE_PATH.exists():
+        return {"latest": None, "history": []}
+
+    try:
+        cached = json.loads(DEVICE_CACHE_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {"latest": None, "history": []}
+
+    if not isinstance(cached, dict):
+        return {"latest": None, "history": []}
+
+    latest = cached.get("latest")
+    history = cached.get("history")
+    if not isinstance(history, list):
+        history = []
+
+    return {"latest": latest, "history": history}
+
+
+def save_device_cache(payload):
+    history = load_device_cache().get("history", [])
+    history.append(payload)
+    history = history[-MAX_HISTORY_ITEMS:]
+
+    DEVICE_CACHE_PATH.write_text(json.dumps({
+        "latest": payload,
+        "history": history,
+    }))
+
+
+def get_or_create_sensor(jenis_sensor, satuan, device_id=1):
+    sensor = Sensor.objects.filter(jenis_sensor=jenis_sensor).order_by('id_sensor').first()
+    if sensor:
+        return sensor
+
+    return Sensor.objects.create(
+        id_device_id=device_id,
+        jenis_sensor=jenis_sensor,
+        satuan=satuan,
+    )
+
+
+def parse_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+    return bool(value)
+
+
+def build_chart_data(history):
+    today = timezone.localtime().date()
+    chart_data = []
+
+    for item in history:
+        timestamp_raw = item.get('timestamp')
+        if not timestamp_raw:
+            continue
+        try:
+            parsed = datetime.fromisoformat(timestamp_raw)
+        except ValueError:
+            continue
+
+        if timezone.is_naive(parsed):
+            parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+
+        local_time = timezone.localtime(parsed)
+        if local_time.date() != today:
+            continue
+
+        chart_data.append({
+            "time": local_time.strftime('%H:%M'),
+            "kelembapan": item.get('soil_percent', 0),
+            "cahaya": item.get('lux', 0),
+            "suhu": item.get('temperature', 0),
+            "kelembapan_udara": item.get('humidity', 0),
+            "curah_hujan": item.get('rain_mm', 0),
+        })
+
+    return chart_data[-24:]
+
 @api_view(['GET'])
 def dashboard_data(request):
     try:
-        # Panggil data sensor terbaru
         latest_kelembapan = 0
         latest_cahaya = 0
+        latest_suhu = 0
+        latest_kelembapan_udara = 0
+        latest_curah_hujan = 0
         
-        # Cari sensor kelembapan dan suhu (atau intensitas cahaya jika ada)
-        # Sesuai dgn db: jenis_sensor enum('kelembapan','suhu')
-        # Tapi di React butuh kelembapan dan intensitas cahaya, ada kemungkinan intensitas cahaya direpresentasikan "suhu" jika sensornya terbatas, kita coba cari "kelembapan" saja dulu.
         kelem_sensor = Sensor.objects.filter(jenis_sensor='kelembapan').first()
         suhu_sensor = Sensor.objects.filter(jenis_sensor='suhu').first()
 
@@ -38,52 +125,96 @@ def dashboard_data(request):
         if latest_pompa and latest_pompa.status == 'ON':
             pompa_aktif = True
 
-        # Kita buat chart_data mock berdasarkan data database jika ada, atau dummy seperti di React
-        # Ambil data hari ini, agregasi per jam jika diperlukan
-        chart_data = [
-            {"time": "08:00", "kelembapan": 45, "cahaya": 800},
-            {"time": "10:00", "kelembapan": 42, "cahaya": 1200},
-            {"time": "12:00", "kelembapan": 38, "cahaya": 1500},
-            {"time": "14:00", "kelembapan": 40, "cahaya": 1400},
-            {"time": "16:00", "kelembapan": 55, "cahaya": 900},
-            {"time": "18:00", "kelembapan": 60, "cahaya": 400},
-        ]
-        
-        # Coba override chart_data dummy dengan jika ada data nyata di hari yang sama
-        today = timezone.localtime().date()
-        logs_today = TelemetryLog.objects.filter(timestamp__date=today).order_by('timestamp')
-        
-        if logs_today.exists():
-            actual_chart = []
-            # Sangat sederhana untuk contoh, grup berdasar jam:
-            from itertools import groupby
-            for hour, group in groupby(logs_today, key=lambda x: x.timestamp.strftime('%H:00')):
-                logs = list(group)
-                k_vals = [l.nilai_sensor for l in logs if l.id_sensor == kelem_sensor]
-                c_vals = [l.nilai_sensor for l in logs if l.id_sensor == suhu_sensor]
-                
-                avg_k = sum(k_vals)/len(k_vals) if k_vals else 0
-                avg_c = sum(c_vals)/len(c_vals) if c_vals else 0
-                
-                actual_chart.append({
-                    "time": hour,
-                    "kelembapan": round(avg_k, 1),
-                    "cahaya": round(avg_c, 1) # Again using suhu to represent cahaya since enum
-                })
-            if len(actual_chart) > 0:
-                chart_data = actual_chart
+        cache = load_device_cache()
+        latest_payload = cache.get("latest") or {}
+        chart_data = build_chart_data(cache.get("history", []))
 
-        # Kita biarkan 0 jika memang database masih kosong
-        # agar ketahuan ini adalah data real, bukan data palsu.
+        if latest_payload:
+            latest_kelembapan = latest_payload.get('soil_percent', latest_kelembapan)
+            latest_cahaya = latest_payload.get('lux', latest_cahaya)
+            latest_suhu = latest_payload.get('temperature', latest_suhu)
+            latest_kelembapan_udara = latest_payload.get('humidity', latest_kelembapan_udara)
+            latest_curah_hujan = latest_payload.get('rain_mm', latest_curah_hujan)
+            pompa_aktif = latest_payload.get('relay_state', pompa_aktif)
 
         data = {
             "kelembapan": latest_kelembapan,
             "cahaya": latest_cahaya,
+            "suhu": latest_suhu,
+            "kelembapan_udara": latest_kelembapan_udara,
+            "curah_hujan": latest_curah_hujan,
             "pompa_aktif": pompa_aktif,
             "chart_data": chart_data
         }
         
         return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['POST'])
+def ingest_telemetry(request):
+    try:
+        expected_key = getattr(settings, 'DEVICE_API_KEY', None)
+        provided_key = request.headers.get('X-Device-Key') or request.data.get('api_key')
+
+        if expected_key and provided_key != expected_key:
+            return Response({"success": False, "message": "API key tidak valid."}, status=403)
+
+        soil_percent = float(request.data.get('soil_percent', 0))
+        lux = float(request.data.get('lux', 0))
+        temperature = float(request.data.get('temperature', 0))
+        humidity = float(request.data.get('humidity', 0))
+        rain_raw = int(request.data.get('rain_raw', 0))
+        rain_mm = float(request.data.get('rain_mm', 0))
+        relay_state = parse_bool(request.data.get('relay_state', False))
+
+        payload = {
+            "timestamp": timezone.now().isoformat(),
+            "soil_percent": round(soil_percent, 2),
+            "lux": round(lux, 2),
+            "temperature": round(temperature, 2),
+            "humidity": round(humidity, 2),
+            "rain_raw": rain_raw,
+            "rain_mm": round(rain_mm, 2),
+            "relay_state": relay_state,
+        }
+
+        save_device_cache(payload)
+
+        try:
+            kelembapan_sensor = get_or_create_sensor('kelembapan', '%')
+            cahaya_sensor = get_or_create_sensor('suhu', 'lux')
+
+            TelemetryLog.objects.create(
+                id_sensor=kelembapan_sensor,
+                nilai_sensor=payload['soil_percent'],
+                timestamp=timezone.now(),
+            )
+            TelemetryLog.objects.create(
+                id_sensor=cahaya_sensor,
+                nilai_sensor=payload['lux'],
+                timestamp=timezone.now(),
+            )
+
+            last_pump = SprinklerLog.objects.order_by('-waktu').first()
+            expected_status = 'ON' if relay_state else 'OFF'
+            if not last_pump or last_pump.status != expected_status:
+                SprinklerLog.objects.create(
+                    status=expected_status,
+                    waktu=timezone.now(),
+                    sumber='otomatis',
+                )
+        except Exception as db_error:
+            payload["db_warning"] = str(db_error)
+
+        return Response({
+            "success": True,
+            "message": "Data telemetry berhasil diterima.",
+            "data": payload,
+        })
+    except (TypeError, ValueError):
+        return Response({"success": False, "message": "Format data telemetry tidak valid."}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
     

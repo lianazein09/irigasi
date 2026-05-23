@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+dist
+venv
+frontend
+backend/__pycache__
+backend/api/__pycache__
+backend/backend/__pycache__
+src/**/*.test.*

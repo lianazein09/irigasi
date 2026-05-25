@@ -21,10 +21,19 @@ help:
 deploy:
 	@echo "Removing local frontend build artifacts (dist/) to avoid stale assets..."
 	@rm -rf dist || true
+	@echo "Removing existing frontend image if present..."
+	@docker image rm --force irigasi-frontend || true
+	@echo "Pruning unused Docker objects to avoid stale cache..."
+	@docker system prune -af || true
 	@echo "Building fresh frontend image (no cache)..."
 	$(COMPOSE) build --no-cache frontend
 	@echo "Starting stack with rebuilt frontend..."
 	$(COMPOSE) up -d --force-recreate --build
+	@echo "Waiting a few seconds for containers to settle..."
+	@sleep 5
+	$(COMPOSE) ps
+	@echo "If backend is restarting or unhealthy, view recent backend logs:"
+	@echo "  make logs  # or: docker compose logs --tail 80 backend"
 
 up:
 	$(COMPOSE) up -d

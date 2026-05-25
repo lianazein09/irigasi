@@ -6,3 +6,4 @@ mysqlclient==2.2.8
 paho-mqtt==2.1.0
 PyMySQL==1.2.0
 sqlparse==0.5.5
+whitenoise==6.12.0

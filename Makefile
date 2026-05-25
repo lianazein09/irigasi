@@ -19,7 +19,12 @@ help:
 	@echo "Override env file with: make <target> ENV_FILE=.env.example"
 
 deploy:
-	$(COMPOSE) up -d --build
+	@echo "Removing local frontend build artifacts (dist/) to avoid stale assets..."
+	@rm -rf dist || true
+	@echo "Building fresh frontend image (no cache)..."
+	$(COMPOSE) build --no-cache frontend
+	@echo "Starting stack with rebuilt frontend..."
+	$(COMPOSE) up -d --force-recreate --build
 
 up:
 	$(COMPOSE) up -d

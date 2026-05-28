@@ -1,13 +1,14 @@
 ENV_FILE ?= .env
 COMPOSE := docker compose --env-file $(ENV_FILE)
-CLEAN_DEPLOY := $(filter --clean,$(MAKECMDGOALS))
+CLEAN ?= 0
 
-.PHONY: help deploy up down restart build rebuild logs ps config clean --clean
+.PHONY: help deploy deploy-clean up down restart build rebuild logs ps config clean
 
 help:
 	@echo "Available targets:"
 	@echo "  make deploy            - Deploy with rebuild"
-	@echo "  make deploy --clean    - Clean deploy with fresh images and volumes reset"
+	@echo "  make deploy CLEAN=1    - Clean deploy with fresh images and volumes reset"
+	@echo "  make deploy-clean      - Alias for clean deploy"
 	@echo "  make up       - Start existing containers without rebuild"
 	@echo "  make down     - Stop containers"
 	@echo "  make restart  - Restart containers"
@@ -23,7 +24,7 @@ help:
 deploy:
 	@echo "Removing local frontend build artifacts (dist/) to avoid stale assets..."
 	@rm -rf dist || true
-ifeq ($(CLEAN_DEPLOY),--clean)
+ifeq ($(CLEAN),1)
 	@echo "Running clean deploy: stopping stack and removing volumes..."
 	$(COMPOSE) down -v --remove-orphans || true
 endif
@@ -40,6 +41,9 @@ endif
 	$(COMPOSE) ps
 	@echo "If backend is restarting or unhealthy, view recent backend logs:"
 	@echo "  make logs  # or: docker compose logs --tail 80 backend"
+
+deploy-clean:
+	@$(MAKE) deploy CLEAN=1 ENV_FILE=$(ENV_FILE)
 
 up:
 	$(COMPOSE) up -d
@@ -67,6 +71,3 @@ config:
 
 clean:
 	$(COMPOSE) down -v
-
---clean:
-	@:

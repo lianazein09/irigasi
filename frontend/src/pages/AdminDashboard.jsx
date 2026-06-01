@@ -20,7 +20,7 @@ export default function AdminDashboard() {
 
   const handleTogglePompa = async () => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/toggle-pump/');
+        const response = await axios.post('http://127.0.0.1:8000/api/toggle-pump/');
       if (response.data.success) {
         setData(prev => ({ ...prev, pompa_aktif: response.data.pompa_aktif }));
         alert(response.data.message);
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
 
   const handleSimpanBatas = async () => {
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/threshold/', {
+        const response = await axios.post('http://127.0.0.1:8000/api/threshold/', {
         batas_kelembapan: batasKelembapan
       });
       if (response.data.success) {
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
 
   const handleDownloadReport = () => {
     setIsDownloading(true);
-    window.location.href = 'http://127.0.0.1:8000/api/download-report/';
+     window.location.href = 'http://127.0.0.1:8000/api/download-report/';
     setTimeout(() => setIsDownloading(false), 2000);
   };
 

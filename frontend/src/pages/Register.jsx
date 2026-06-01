@@ -15,7 +15,7 @@ export default function Register() {
     e.preventDefault();
     setErrorMsg('');
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+        const response = await axios.post('http://127.0.0.1:8000/api/register/', {
         nama: name,
         username: username,
         password: password,

@@ -48,6 +48,14 @@ export default function PetaniDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const getStatusCurahHujan = (mm) => {
+    if (mm === 0) return "Tidak Hujan";
+    if (mm <= 20) return "Hujan Ringan";
+    if (mm <= 50) return "Hujan Sedang";
+    if (mm <= 100) return "Hujan Lebat";
+    return "Hujan Sangat Lebat / Extreme";
+  };
+
   return (
     <>
       <div className="dashboard-header animate-fade-in">
@@ -98,7 +106,7 @@ export default function PetaniDashboard() {
           unit="mm"
           icon={CloudRain}
           color="#6366F1"
-          trend="Hujan Ringan"
+          trend={getStatusCurahHujan(data.curah_hujan || 12.5)}
         />
       </div>
 

@@ -48,7 +48,7 @@ export default function Navbar() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/profile/update/', {
+       const response = await axios.post('http://127.0.0.1:8000/api/profile/update/', {
         id_user: currentUser.id_user,
         nama: editData.nama,
         username: editData.username,

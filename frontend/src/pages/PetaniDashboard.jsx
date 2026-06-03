@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Droplets, Sun, Thermometer, Wind, CloudRain } from 'lucide-react';
+import { Droplets, Sun, Thermometer, Wind, CloudRain, Power } from 'lucide-react';
 import axios from 'axios';
 import SensorCard from '../components/SensorCard';
 import ChartWidget from '../components/ChartWidget';
@@ -31,20 +31,20 @@ export default function PetaniDashboard() {
           }));
         }
 
-        setData(prevData => ({
+        setData({
           ...apiData,
           pompa_aktif: apiData.pompa_aktif,
           suhu: apiData.suhu || 28.5,
           kelembapan_udara: apiData.kelembapan_udara || 65,
           curah_hujan: apiData.curah_hujan || 12.5
-        }));
+        });
       } catch (error) {
         console.error("Gagal mengambil data dari server:", error);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -107,6 +107,14 @@ export default function PetaniDashboard() {
           icon={CloudRain}
           color="#6366F1"
           trend={getStatusCurahHujan(data.curah_hujan || 12.5)}
+        />
+        <SensorCard 
+          title="Status Penyiraman"
+          value={data.pompa_aktif ? 'Aktif' : 'Nonaktif'}
+          unit=""
+          icon={Power}
+          color={data.pompa_aktif ? '#10B981' : '#6B7280'}
+          trend={data.pompa_aktif ? 'Sedang Berjalan' : 'Terhenti'}
         />
       </div>
 

@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import DashboardLayout from './layouts/DashboardLayout';
 import PetaniDashboard from './pages/PetaniDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -15,6 +16,10 @@ function App() {
         {/* Rute Dashboard Utama (Monitoring) */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<PetaniDashboard />} />
+        </Route>
+
+        <Route path="/admin-dashboard" element={<DashboardLayout />}>
+          <Route index element={<AdminDashboard />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

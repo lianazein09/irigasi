@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Droplets, Lock, User, Briefcase, AtSign } from 'lucide-react';
 import axios from 'axios';
 import './Auth.css';
+import { apiUrl } from '../utils/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -15,7 +16,7 @@ export default function Register() {
     e.preventDefault();
     setErrorMsg('');
     try {
-        const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+        const response = await axios.post(apiUrl('/register/'), {
         nama: name,
         username: username,
         password: password,

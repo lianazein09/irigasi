@@ -3,6 +3,7 @@ import { Droplets, Sun, Thermometer, Wind, CloudRain, Power } from 'lucide-react
 import axios from 'axios';
 import SensorCard from '../components/SensorCard';
 import ChartWidget from '../components/ChartWidget';
+import { apiUrl } from '../utils/api';
 
 export default function PetaniDashboard() {
   const [data, setData] = useState({
@@ -18,7 +19,7 @@ export default function PetaniDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/dashboard/');
+        const response = await axios.get(apiUrl('/dashboard/'));
         
         let apiData = response.data;
         

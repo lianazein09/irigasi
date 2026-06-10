@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Droplets, Sun, Download, Thermometer, Wind, CloudRain, Power } from 'lucide-react';
+import { Droplets, Sun, Download, Thermometer, Wind, CloudRain } from 'lucide-react';
 import axios from 'axios';
 import SensorCard from '../components/SensorCard';
 import ChartWidget from '../components/ChartWidget';
@@ -18,18 +18,6 @@ export default function AdminDashboard() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [batasKelembapan, setBatasKelembapan] = useState(40);
 
-  const handleTogglePompa = async () => {
-    try {
-        const response = await axios.post('http://127.0.0.1:8000/api/toggle-pump/');
-      if (response.data.success) {
-        setData(prev => ({ ...prev, pompa_aktif: response.data.pompa_aktif }));
-        alert(response.data.message);
-      }
-    } catch (error) {
-      console.error('Gagal toggle pompa:', error);
-      alert('Gagal mengubah status pompa. Silakan coba lagi.');
-    }
-  };
 
   const handleSimpanBatas = async () => {
     try {
@@ -174,43 +162,6 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>Kontrol & Konfigurasi Sistem</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-
-        {/* Kontrol Manual */}
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem' }}>
-            <Power size={20} color="var(--color-primary)" />
-            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Kontrol Manual Pompa</h3>
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Nyalakan atau matikan pompa air secara langsung dari aplikasi.</p>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '1rem' }}>
-            <div>
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status Saat Ini: </span>
-              <strong style={{ color: data.pompa_aktif ? '#3B82F6' : '#EF4444' }}>{data.pompa_aktif ? 'ON' : 'OFF'}</strong>
-            </div>
-            <button
-              onClick={handleTogglePompa}
-              style={{
-                backgroundColor: data.pompa_aktif ? '#EF4444' : '#3B82F6',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              <Power size={16} />
-              {data.pompa_aktif ? 'Matikan Pompa' : 'Nyalakan Pompa'}
-            </button>
-          </div>
-        </div>
-      </div>
 
     </>
   );

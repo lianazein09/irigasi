@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Droplets, Lock, User } from 'lucide-react';
 import axios from 'axios';
 import './Auth.css';
+import { apiUrl } from '../utils/api';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -15,7 +16,7 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg('');
     try {
-        const response = await axios.post('http://127.0.0.1:8000/api/login/', {
+        const response = await axios.post(apiUrl('/login/'), {
         username: username,
         password: password
       });

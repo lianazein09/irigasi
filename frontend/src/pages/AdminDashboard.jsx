@@ -3,6 +3,7 @@ import { Droplets, Sun, Download, Thermometer, Wind, CloudRain } from 'lucide-re
 import axios from 'axios';
 import SensorCard from '../components/SensorCard';
 import ChartWidget from '../components/ChartWidget';
+import { apiUrl } from '../utils/api';
 
 export default function AdminDashboard() {
   const [data, setData] = useState({
@@ -11,49 +12,29 @@ export default function AdminDashboard() {
     suhu: 28.5,
     kelembapan_udara: 65,
     curah_hujan: 12.5,
-    pompa_aktif: false,
     chart_data: []
   });
 
   const [isDownloading, setIsDownloading] = useState(false);
-  const [batasKelembapan, setBatasKelembapan] = useState(40);
 
-
-  const handleSimpanBatas = async () => {
-    try {
-        const response = await axios.post('http://127.0.0.1:8000/api/threshold/', {
-        batas_kelembapan: batasKelembapan
-      });
-      if (response.data.success) {
-        alert(response.data.message);
-      }
-    } catch (error) {
-      console.error('Gagal menyimpan batas:', error);
-      alert('Gagal menyimpan ambang batas. Silakan coba lagi.');
-    }
+  const getStatusCurahHujan = (mm) => {
+    if (mm === 0) return 'Tidak Hujan';
+    if (mm <= 20) return 'Hujan Ringan';
+    if (mm <= 50) return 'Hujan Sedang';
+    if (mm <= 100) return 'Hujan Lebat';
+    return 'Hujan Sangat Lebat';
   };
 
   const handleDownloadReport = () => {
     setIsDownloading(true);
-     window.location.href = 'http://127.0.0.1:8000/api/download-report/';
+    window.location.href = apiUrl('/download-report/');
     setTimeout(() => setIsDownloading(false), 2000);
   };
 
   useEffect(() => {
-    const fetchThreshold = async () => {
-      try {
-        const response = await axios.get('http://127.0.0.1:8000/api/threshold/');
-        if (response.data.batas_kelembapan) {
-          setBatasKelembapan(response.data.batas_kelembapan);
-        }
-      } catch (error) {
-        console.error("Gagal mengambil data threshold:", error);
-      }
-    };
-
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/dashboard/');
+        const response = await axios.get(apiUrl('/dashboard/'));
         let apiData = response.data;
 
         if (apiData.chart_data && apiData.chart_data.length > 0) {
@@ -65,19 +46,17 @@ export default function AdminDashboard() {
           }));
         }
 
-        setData(prevData => ({
+        setData({
           ...apiData,
-          pompa_aktif: apiData.pompa_aktif,
           suhu: apiData.suhu || 28.5,
           kelembapan_udara: apiData.kelembapan_udara || 65,
           curah_hujan: apiData.curah_hujan || 12.5
-        }));
+        });
       } catch (error) {
-        console.error("Gagal mengambil data dari server:", error);
+        console.error('Gagal mengambil data dari server:', error);
       }
     };
 
-    fetchThreshold();
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
@@ -89,7 +68,7 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Dashboard Admin</h1>
-            <p style={{ color: 'var(--text-muted)' }}>Kelola laporan, kontrol pompa, dan pantau grafik sensor secara penuh.</p>
+            <p style={{ color: 'var(--text-muted)' }}>Pantau kondisi irigasi dan unduh laporan sensor.</p>
           </div>
           <button
             onClick={handleDownloadReport}
@@ -112,57 +91,17 @@ export default function AdminDashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <SensorCard
-          title="Kelembapan Tanah"
-          value={data.kelembapan}
-          unit="%"
-          icon={Droplets}
-          color="#10B981"
-          trend="Semua Zona"
-        />
-        <SensorCard
-          title="Intensitas Cahaya"
-          value={data.cahaya}
-          unit="Lux"
-          icon={Sun}
-          color="#F59E0B"
-          trend="Optimal"
-        />
-        <SensorCard
-          title="Suhu Udara"
-          value={data.suhu || 28.5}
-          unit="°C"
-          icon={Thermometer}
-          color="#EF4444"
-          trend="Normal"
-        />
-        <SensorCard
-          title="Kelembapan Udara"
-          value={data.kelembapan_udara || 65}
-          unit="%"
-          icon={Wind}
-          color="#3B82F6"
-          trend="Sedikit Lembap"
-        />
-        <SensorCard
-          title="Curah Hujan"
-          value={data.curah_hujan || 12.5}
-          unit="mm"
-          icon={CloudRain}
-          color="#6366F1"
-          trend="Hujan Ringan"
-        />
+        <SensorCard title="Kelembapan Tanah" value={data.kelembapan} unit="%" icon={Droplets} color="#10B981" trend="Semua Zona" />
+        <SensorCard title="Intensitas Cahaya" value={data.cahaya} unit="Lux" icon={Sun} color="#F59E0B" trend="Optimal" />
+        <SensorCard title="Suhu Udara" value={data.suhu || 28.5} unit="°C" icon={Thermometer} color="#EF4444" trend="Normal" />
+        <SensorCard title="Kelembapan Udara" value={data.kelembapan_udara || 65} unit="%" icon={Wind} color="#3B82F6" trend="Sedikit Lembap" />
+        <SensorCard title="Curah Hujan" value={data.curah_hujan || 12.5} unit="mm" icon={CloudRain} color="#6366F1" trend={getStatusCurahHujan(data.curah_hujan || 12.5)} />
       </div>
 
       <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>Grafik Sensor</h2>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-        <ChartWidget
-          title="Grafik Fluktuasi Sensor Hari Ini"
-          data={data.chart_data}
-        />
+        <ChartWidget title="Grafik Fluktuasi Sensor Hari Ini" data={data.chart_data} />
       </div>
-
-
     </>
   );
 }

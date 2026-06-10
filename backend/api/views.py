@@ -283,75 +283,65 @@ def register_user(request):
 
 @api_view(['GET'])
 def download_report(request):
-    """
-    Download laporan data sensor dan sprinkler dalam format CSV
-    Parameter opsional: days (default 7 hari terakhir)
-    """
-    try:
-        # Ambil parameter days dari query string, default 7 hari
-        days = int(request.GET.get('days', 7))
-        
-        # Hitung tanggal mulai
-        start_date = timezone.now() - timedelta(days=days)
-        
-        # Query data telemetry logs
-        telemetry_data = TelemetryLog.objects.filter(
-            timestamp__gte=start_date
-        ).select_related('id_sensor').order_by('timestamp')
-        
-        # Query data sprinkler logs
-        sprinkler_data = SprinklerLog.objects.filter(
-            waktu__gte=start_date
-        ).order_by('waktu')
-        
-        # Buat response HTTP dengan header CSV
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="laporan_irigasi_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
-        # Buat writer CSV
-        writer = csv.writer(response)
-        
-        # Header file CSV
-        writer.writerow(['Laporan Sistem Irigasi Pintar'])
-        writer.writerow([f'Periode: {start_date.strftime("%Y-%m-%d")} sampai {timezone.now().strftime("%Y-%m-%d")}'])
-        writer.writerow([])
-        
-        # Header untuk data sensor
-        writer.writerow(['=== DATA SENSOR ==='])
-        writer.writerow(['Timestamp', 'Sensor', 'Nilai', 'Satuan'])
-        
-        # Tulis data sensor
-        for log in telemetry_data:
-            sensor_name = log.id_sensor.jenis_sensor if log.id_sensor else 'Unknown'
-            satuan = log.id_sensor.satuan if log.id_sensor else ''
-            writer.writerow([
-                log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                sensor_name,
-                log.nilai_sensor,
-                satuan
-            ])
-        
-        writer.writerow([])
-        
-        # Header untuk data sprinkler
-        writer.writerow(['=== DATA SPRINKLER ==='])
-        writer.writerow(['Timestamp', 'Status', 'Sumber'])
-        
-        # Tulis data sprinkler
-        for log in sprinkler_data:
-            writer.writerow([
-                log.waktu.strftime('%Y-%m-%d %H:%M:%S'),
-                log.status,
-                log.sumber
-            ])
-        
-        writer.writerow([])
-        writer.writerow(['Diekspor pada:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
-        
-        return response
-        
-    except Exception as e:
-        return Response({"error": f"Gagal generate laporan: {str(e)}"}, status=500)
+    days = int(request.GET.get('days', 1))
+    start_date = timezone.now() - timedelta(days=days)
+
+    cache = load_device_cache()
+    history = cache.get("history", [])
+
+    filtered = []
+    for item in history:
+        ts_raw = item.get('timestamp')
+        if not ts_raw:
+            continue
+        try:
+            ts = datetime.fromisoformat(ts_raw)
+            if timezone.is_naive(ts):
+                ts = timezone.make_aware(ts, timezone.get_current_timezone())
+            if ts >= start_date:
+                filtered.append(item)
+        except ValueError:
+            continue
+
+    sprinkler_logs = SprinklerLog.objects.filter(waktu__gte=start_date).order_by('waktu')
+    sprinkler_map = {}
+    for log in sprinkler_logs:
+        ts = log.waktu
+        if timezone.is_naive(ts):
+            ts = timezone.make_aware(ts, timezone.get_current_timezone())
+        key = ts.strftime('%Y-%m-%d %H:%M')
+        sprinkler_map[key] = 1 if log.status == 'ON' else 0
+
+    response = HttpResponse(content_type='application/vnd.ms-excel; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="laporan_irigasi_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    response.write('\ufeff')
+
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['Date Time', 'Soil %', 'Suhu (°C)', 'Hum', 'Intensitas cahaya (lux)', 'Rain (mm)', 'Pump'])
+
+    for item in filtered:
+        ts_raw = item.get('timestamp')
+        try:
+            ts = datetime.fromisoformat(ts_raw)
+            if timezone.is_naive(ts):
+                ts = timezone.make_aware(ts, timezone.get_current_timezone())
+            local_time = timezone.localtime(ts)
+            time_str = local_time.strftime('%Y-%m-%d %H:%M')
+            pump_status = sprinkler_map.get(time_str, 0)
+        except ValueError:
+            continue
+
+        writer.writerow([
+            time_str,
+            item.get('soil_percent', 0),
+            item.get('temperature', 0),
+            item.get('humidity', 0),
+            item.get('lux', 0),
+            item.get('rain_mm', 0),
+            pump_status
+        ])
+
+    return response
 
 @api_view(['POST'])
 def update_profile(request):

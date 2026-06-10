@@ -13,12 +13,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rute Dashboard Petani */}
+        {/* Dashboard Petani */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<PetaniDashboard />} />
         </Route>
 
-        {/* Rute Dashboard Admin */}
+        {/* Dashboard Admin */}
         <Route path="/admin-dashboard" element={<DashboardLayout />}>
           <Route index element={<AdminDashboard />} />
         </Route>

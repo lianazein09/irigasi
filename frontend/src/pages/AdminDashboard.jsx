@@ -42,7 +42,7 @@ export default function AdminDashboard() {
             ...item,
             suhu: item.suhu || (Math.random() * 5 + 25).toFixed(1),
             kelembapan_udara: item.kelembapan_udara || (Math.random() * 20 + 50).toFixed(1),
-            curah_hujan: item.curah_hujan || (Math.random() * 15).toFixed(1)
+            curah_hujan: item.curah_hujan ?? (Math.random() * 15).toFixed(1)
           }));
         }
 
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
           ...apiData,
           suhu: apiData.suhu || 28.5,
           kelembapan_udara: apiData.kelembapan_udara || 65,
-          curah_hujan: apiData.curah_hujan || 12.5
+          curah_hujan: apiData.curah_hujan ?? 12.5
         });
       } catch (error) {
         console.error('Gagal mengambil data dari server:', error);
@@ -91,11 +91,11 @@ export default function AdminDashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <SensorCard title="Kelembapan Tanah" value={data.kelembapan} unit="%" icon={Droplets} color="#10B981" trend="Semua Zona" />
+        <SensorCard title="Kelembapan Tanah" value={data.kelembapan} unit="%" icon={Droplets} color="#10B981" />
         <SensorCard title="Intensitas Cahaya" value={data.cahaya} unit="Lux" icon={Sun} color="#F59E0B" trend="Optimal" />
         <SensorCard title="Suhu Udara" value={data.suhu || 28.5} unit="°C" icon={Thermometer} color="#EF4444" trend="Normal" />
         <SensorCard title="Kelembapan Udara" value={data.kelembapan_udara || 65} unit="%" icon={Wind} color="#3B82F6" trend="Sedikit Lembap" />
-        <SensorCard title="Curah Hujan" value={data.curah_hujan || 12.5} unit="mm" icon={CloudRain} color="#6366F1" trend={getStatusCurahHujan(data.curah_hujan || 12.5)} />
+        <SensorCard title="Curah Hujan" value={data.curah_hujan ?? 12.5} unit="mm" icon={CloudRain} color="#6366F1" trend={getStatusCurahHujan(data.curah_hujan ?? 12.5)} />
       </div>
 
       <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>Grafik Sensor</h2>

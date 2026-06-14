@@ -12,7 +12,7 @@ from datetime import datetime
 from .models import TelemetryLog, SprinklerLog, Sensor
 
 DEVICE_CACHE_PATH = Path(settings.BASE_DIR) / 'device_latest.json'
-MAX_HISTORY_ITEMS = 288
+MAX_HISTORY_ITEMS = 100000
 
 
 def load_device_cache():
@@ -38,7 +38,6 @@ def load_device_cache():
 def save_device_cache(payload):
     history = load_device_cache().get("history", [])
     history.append(payload)
-    history = history[-MAX_HISTORY_ITEMS:]
 
     DEVICE_CACHE_PATH.write_text(json.dumps({
         "latest": payload,
@@ -97,6 +96,7 @@ def build_chart_data(history):
 
     return chart_data[-24:]
 
+
 @api_view(['GET'])
 def dashboard_data(request):
     try:
@@ -117,7 +117,7 @@ def dashboard_data(request):
         if suhu_sensor:
             s_log = TelemetryLog.objects.filter(id_sensor=suhu_sensor).order_by('-timestamp').first()
             if s_log:
-                latest_cahaya = s_log.nilai_sensor # Using suhu as a substitute since light isn't in DB enum currently
+                latest_cahaya = s_log.nilai_sensor  # Using suhu as a substitute since light isn't in DB enum currently
         
         # Cek status pompa terakhir
         latest_pompa = SprinklerLog.objects.order_by('-waktu').first()
@@ -217,8 +217,10 @@ def ingest_telemetry(request):
         return Response({"success": False, "message": "Format data telemetry tidak valid."}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-    
+
+
 from .models import User, LoginLog
+
 @api_view(['POST'])
 def login_user(request):
     try:
@@ -250,11 +252,10 @@ def login_user(request):
                 }
             })
         else:
-            # Login gagal
-            # Kita bisa simpan ke LoginLog juga kalau mau, tp username gak ketemu id_user nya
             return Response({"success": False, "message": "Username atau Password salah."}, status=401)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
 
 @api_view(['POST'])
 def register_user(request):
@@ -262,7 +263,7 @@ def register_user(request):
         username = request.data.get('username')
         password = request.data.get('password')
         nama = request.data.get('nama')
-        role = request.data.get('role', 'user') # Default jadi petani (user)
+        role = request.data.get('role', 'user')  # Default jadi petani (user)
 
         if not username or not password or not nama:
             return Response({"success": False, "message": "Semua kolom harus diisi!"}, status=400)
@@ -281,14 +282,17 @@ def register_user(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
+
 @api_view(['GET'])
 def download_report(request):
-    days = int(request.GET.get('days', 1))
+    # Default 30 hari agar data historis (misal tanggal 11) tetap ikut terunduh
+    days = int(request.GET.get('days', 30))
     start_date = timezone.now() - timedelta(days=days)
 
     cache = load_device_cache()
     history = cache.get("history", [])
 
+    # Filter berdasarkan parameter days, simpan bersama timestamp-nya
     filtered = []
     for item in history:
         ts_raw = item.get('timestamp')
@@ -299,9 +303,12 @@ def download_report(request):
             if timezone.is_naive(ts):
                 ts = timezone.make_aware(ts, timezone.get_current_timezone())
             if ts >= start_date:
-                filtered.append(item)
+                filtered.append((ts, item))
         except ValueError:
             continue
+
+    # Urutkan berdasarkan timestamp ascending agar multi-hari tersusun rapi
+    filtered.sort(key=lambda x: x[0])
 
     sprinkler_logs = SprinklerLog.objects.filter(waktu__gte=start_date).order_by('waktu')
     sprinkler_map = {}
@@ -319,21 +326,31 @@ def download_report(request):
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['Date Time', 'Soil %', 'Suhu (°C)', 'Hum', 'Intensitas cahaya (lux)', 'Rain (mm)', 'Pump'])
 
-    for item in filtered:
-        ts_raw = item.get('timestamp')
+    for (local_ts, item) in filtered:
         try:
-            ts = datetime.fromisoformat(ts_raw)
-            if timezone.is_naive(ts):
-                ts = timezone.make_aware(ts, timezone.get_current_timezone())
-            local_time = timezone.localtime(ts)
+            local_time = timezone.localtime(local_ts)
             time_str = local_time.strftime('%Y-%m-%d %H:%M')
-            pump_status = sprinkler_map.get(time_str, 0)
-        except ValueError:
+
+            soil_pct = item.get('soil_percent', 0)
+
+            # Logika pompa: soil < 40% → pompa ON (1), soil > 60% → pompa OFF (0)
+            # Jika ada log sprinkler yang cocok di menit tersebut, pakai itu.
+            # Jika tidak, tentukan dari soil_percent.
+            if time_str in sprinkler_map:
+                pump_status = sprinkler_map[time_str]
+            elif soil_pct < 40:
+                pump_status = 1  # Tanah kering → pompa ON
+            elif soil_pct > 60:
+                pump_status = 0  # Tanah cukup lembap → pompa OFF
+            else:
+                # Zona tengah (40–60%): ikuti relay_state dari IoT
+                pump_status = 1 if item.get('relay_state', False) else 0
+        except Exception:
             continue
 
         writer.writerow([
             time_str,
-            item.get('soil_percent', 0),
+            soil_pct,
             item.get('temperature', 0),
             item.get('humidity', 0),
             item.get('lux', 0),
@@ -342,6 +359,7 @@ def download_report(request):
         ])
 
     return response
+
 
 @api_view(['POST'])
 def update_profile(request):
@@ -365,7 +383,7 @@ def update_profile(request):
         # Update field
         user.nama = nama
         user.username = username
-        if password: # Hanya update password jika diisi
+        if password:  # Hanya update password jika diisi
             user.password = password
             
         user.save()
@@ -382,6 +400,7 @@ def update_profile(request):
         })
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
 
 from .models import Threshold
 
@@ -411,6 +430,7 @@ def toggle_pump(request):
         })
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
 
 @api_view(['GET', 'POST'])
 def threshold_api(request):

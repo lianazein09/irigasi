@@ -129,13 +129,45 @@ def dashboard_data(request):
         latest_payload = cache.get("latest") or {}
         chart_data = build_chart_data(cache.get("history", []))
 
+        device_status = "offline"
+
         if latest_payload:
-            latest_kelembapan = latest_payload.get('soil_percent', latest_kelembapan)
-            latest_cahaya = latest_payload.get('lux', latest_cahaya)
-            latest_suhu = latest_payload.get('temperature', latest_suhu)
-            latest_kelembapan_udara = latest_payload.get('humidity', latest_kelembapan_udara)
-            latest_curah_hujan = latest_payload.get('rain_mm', latest_curah_hujan)
-            pompa_aktif = latest_payload.get('relay_state', pompa_aktif)
+            timestamp_raw = latest_payload.get('timestamp')
+            is_active = False
+            if timestamp_raw:
+                try:
+                    parsed_time = datetime.fromisoformat(timestamp_raw)
+                    if timezone.is_naive(parsed_time):
+                        parsed_time = timezone.make_aware(parsed_time, timezone.get_current_timezone())
+                    
+                    time_diff = timezone.now() - parsed_time
+                    if time_diff <= timedelta(minutes=1):
+                        is_active = True
+                except ValueError:
+                    pass
+
+            if is_active:
+                device_status = "online"
+                latest_kelembapan = latest_payload.get('soil_percent', latest_kelembapan)
+                latest_cahaya = latest_payload.get('lux', latest_cahaya)
+                latest_suhu = latest_payload.get('temperature', latest_suhu)
+                latest_kelembapan_udara = latest_payload.get('humidity', latest_kelembapan_udara)
+                latest_curah_hujan = latest_payload.get('rain_mm', latest_curah_hujan)
+                pompa_aktif = latest_payload.get('relay_state', pompa_aktif)
+            else:
+                latest_kelembapan = 0
+                latest_cahaya = 0
+                latest_suhu = 0
+                latest_kelembapan_udara = 0
+                latest_curah_hujan = 0
+                pompa_aktif = False
+        else:
+            latest_kelembapan = 0
+            latest_cahaya = 0
+            latest_suhu = 0
+            latest_kelembapan_udara = 0
+            latest_curah_hujan = 0
+            pompa_aktif = False
 
         data = {
             "kelembapan": latest_kelembapan,
@@ -144,6 +176,7 @@ def dashboard_data(request):
             "kelembapan_udara": latest_kelembapan_udara,
             "curah_hujan": latest_curah_hujan,
             "pompa_aktif": pompa_aktif,
+            "device_status": device_status,
             "chart_data": chart_data
         }
         

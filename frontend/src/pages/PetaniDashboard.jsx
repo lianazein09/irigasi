@@ -40,8 +40,8 @@ export default function PetaniDashboard() {
 
         setData({
           ...apiData,
-          suhu: apiData.suhu || 28.5,
-          kelembapan_udara: apiData.kelembapan_udara || 65,
+          suhu: apiData.suhu ?? 28.5,
+          kelembapan_udara: apiData.kelembapan_udara ?? 65,
           curah_hujan: apiData.curah_hujan ?? 12.5
         });
       } catch (error) {
@@ -58,7 +58,14 @@ export default function PetaniDashboard() {
     <>
       <div className="dashboard-header animate-fade-in">
         <div style={{ marginBottom: '1rem' }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Overview Monitoring</h1>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0 }}>Overview Monitoring</h1>
+            {data.device_status === 'online' ? (
+              <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '9999px', fontWeight: 700 }}>Alat Hidup</span>
+            ) : (
+              <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '9999px', fontWeight: 700 }}>Alat Mati</span>
+            )}
+          </div>
           <p style={{ color: 'var(--text-muted)' }}>Pantau kondisi irigasi dan sistem secara real-time.</p>
         </div>
       </div>
@@ -66,8 +73,8 @@ export default function PetaniDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <SensorCard title="Kelembapan Tanah" value={data.kelembapan} unit="%" icon={Droplets} color="#10B981" />
         <SensorCard title="Intensitas Cahaya" value={data.cahaya} unit="Lux" icon={Sun} color="#F59E0B" trend="Optimal" />
-        <SensorCard title="Suhu Udara" value={data.suhu || 28.5} unit="°C" icon={Thermometer} color="#EF4444" trend="Normal" />
-        <SensorCard title="Kelembapan Udara" value={data.kelembapan_udara || 65} unit="%" icon={Wind} color="#3B82F6" trend="Sedikit Lembap" />
+        <SensorCard title="Suhu Udara" value={data.suhu ?? 28.5} unit="°C" icon={Thermometer} color="#EF4444" trend="Normal" />
+        <SensorCard title="Kelembapan Udara" value={data.kelembapan_udara ?? 65} unit="%" icon={Wind} color="#3B82F6" trend="Sedikit Lembap" />
         <SensorCard title="Curah Hujan" value={data.curah_hujan ?? 12.5} unit="mm" icon={CloudRain} color="#6366F1" trend={getStatusCurahHujan(data.curah_hujan ?? 12.5)} />
       </div>
 

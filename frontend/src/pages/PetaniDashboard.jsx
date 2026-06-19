@@ -58,14 +58,7 @@ export default function PetaniDashboard() {
     <>
       <div className="dashboard-header animate-fade-in">
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0 }}>Overview Monitoring</h1>
-            {data.device_status === 'online' ? (
-              <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '9999px', fontWeight: 700 }}>Alat Hidup</span>
-            ) : (
-              <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '9999px', fontWeight: 700 }}>Alat Mati</span>
-            )}
-          </div>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Overview Monitoring</h1>
           <p style={{ color: 'var(--text-muted)' }}>Pantau kondisi irigasi dan sistem secara real-time.</p>
         </div>
       </div>

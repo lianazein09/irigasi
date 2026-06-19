@@ -67,14 +67,7 @@ export default function AdminDashboard() {
       <div className="dashboard-header animate-fade-in">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0 }}>Dashboard Admin</h1>
-              {data.device_status === 'online' ? (
-                <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '9999px', fontWeight: 700 }}>Alat Hidup</span>
-              ) : (
-                <span style={{ marginLeft: '1rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '9999px', fontWeight: 700 }}>Alat Mati</span>
-              )}
-            </div>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem' }}>Dashboard Admin</h1>
             <p style={{ color: 'var(--text-muted)' }}>Pantau kondisi irigasi dan unduh laporan sensor.</p>
           </div>
           <button

@@ -362,15 +362,16 @@ def download_report(request):
     for (local_ts, item) in filtered:
         try:
             local_time = timezone.localtime(local_ts)
-            time_str = local_time.strftime('%Y-%m-%d %H:%M')
+            display_time = local_time.strftime('%Y-%m-%d %H:%M:%S')
+            minute_key = local_time.strftime('%Y-%m-%d %H:%M')
 
             soil_pct = item.get('soil_percent', 0)
 
             # Logika pompa: soil < 40% → pompa ON (1), soil > 60% → pompa OFF (0)
             # Jika ada log sprinkler yang cocok di menit tersebut, pakai itu.
             # Jika tidak, tentukan dari soil_percent.
-            if time_str in sprinkler_map:
-                pump_status = sprinkler_map[time_str]
+            if minute_key in sprinkler_map:
+                pump_status = sprinkler_map[minute_key]
             elif soil_pct < 40:
                 pump_status = 1  # Tanah kering → pompa ON
             elif soil_pct > 60:
@@ -382,7 +383,7 @@ def download_report(request):
             continue
 
         writer.writerow([
-            time_str,
+            display_time,
             soil_pct,
             item.get('temperature', 0),
             item.get('humidity', 0),

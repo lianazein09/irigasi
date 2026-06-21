@@ -6,10 +6,10 @@ import math
 random.seed(42)
 
 history = []
-# Generate data dari 3 jam lalu sampai saat ini
+# Generate data dari 17 Juni 2026 sampai saat ini
 # Setiap 15 detik sekali
 end = datetime.now()
-start = end - timedelta(hours=3)
+start = datetime(2026, 6, 17, 8, 0, 0)
 
 current = start
 while current <= end:

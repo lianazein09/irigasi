@@ -6,10 +6,10 @@ import math
 random.seed(42)
 
 history = []
-# Generate data dari 11 Juni sampai 18 Juni 2026 (8 hari)
-# Setiap 5 menit sekali (288 data per hari)
-start = datetime(2026, 6, 11, 0, 0, 0)
-end = datetime(2026, 6, 18, 23, 55, 0)
+# Generate data dari 3 jam lalu sampai saat ini
+# Setiap 15 detik sekali
+end = datetime.now()
+start = end - timedelta(hours=3)
 
 current = start
 while current <= end:
@@ -59,8 +59,7 @@ while current <= end:
         'relay_state': relay_state
     }
     history.append(entry)
-
-    current += timedelta(minutes=5)
+    current += timedelta(seconds=15)
 
 latest = history[-1]
 data = {'latest': latest, 'history': history}
